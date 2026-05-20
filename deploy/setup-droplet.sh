@@ -17,9 +17,10 @@ echo "Software For Humans — Droplet Setup"
 echo "=============================="
 
 # 1. Create app directory (assumes nginx/certbot/deploy user already exist)
+# NOTE: $APP_DIR/current is created as a *symlink* (not a directory) in step 3
+# so the first GHA deploy can atomically swap it.
 echo "[1/4] Creating app directories..."
 mkdir -p $APP_DIR/releases
-mkdir -p $APP_DIR/current
 chown -R $DEPLOY_USER:$DEPLOY_USER $APP_DIR
 
 # 2. Create a temporary HTTP-only Nginx config for cert issuance
@@ -43,14 +44,17 @@ ln -sf /etc/nginx/sites-available/$DOMAIN /etc/nginx/sites-enabled/
 nginx -t && systemctl reload nginx
 echo "  Nginx configured (HTTP-only)"
 
-# 3. Placeholder index so cert validation works
-echo "[3/4] Creating placeholder..."
-cat > $APP_DIR/current/index.html <<HTML
+# 3. Placeholder release so cert validation works AND first GHA deploy is a clean symlink swap
+echo "[3/4] Creating placeholder release..."
+mkdir -p $APP_DIR/releases/placeholder
+cat > $APP_DIR/releases/placeholder/index.html <<HTML
 <!DOCTYPE html>
 <html><head><title>Software For Humans</title></head>
 <body><h1>Software For Humans — Deployment in progress</h1></body></html>
 HTML
-chown $DEPLOY_USER:$DEPLOY_USER $APP_DIR/current/index.html
+ln -sfn $APP_DIR/releases/placeholder $APP_DIR/current
+chown -R $DEPLOY_USER:$DEPLOY_USER $APP_DIR/releases/placeholder
+chown -h $DEPLOY_USER:$DEPLOY_USER $APP_DIR/current
 
 # 4. Next steps
 echo "[4/4] Almost done."
