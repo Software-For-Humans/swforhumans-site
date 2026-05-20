@@ -25,7 +25,7 @@ jobs:
 
           # Stage what we want shipped — explicit list keeps README, deploy/, .github/ out of production.
           mkdir -p .release
-          for f in index.html sitemap.xml robots.txt favicon.ico favicon.svg; do
+          for f in index.html sitemap.xml robots.txt favicon.ico favicon.svg apple-touch-icon.png; do
             [ -f "$f" ] && cp "$f" .release/
           done
 
