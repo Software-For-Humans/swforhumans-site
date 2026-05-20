@@ -1,0 +1,10 @@
+# https://swforhumans.com/robots.txt
+# Crawl freely — we want every search engine to find us.
+
+User-agent: *
+Allow: /
+
+# Common AI scrapers: we don't block them. Lew can add Disallow lines here
+# if he ever changes his mind about training data.
+
+Sitemap: https://swforhumans.com/sitemap.xml
