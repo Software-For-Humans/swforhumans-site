@@ -1,0 +1,43 @@
+name: Deploy to Droplet
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.DROPLET_IP }} >> ~/.ssh/known_hosts
+
+      - name: Deploy via tar+ssh
+        run: |
+          RELEASE_DIR="/var/www/swforhumans.com/releases/${{ github.sha }}"
+
+          # Stage what we want shipped (only the site, not the deploy/ folder)
+          mkdir -p .release
+          cp index.html .release/
+
+          # Pipe a tarball over SSH, extract, swap symlink atomically, prune old releases
+          tar -czf - -C .release . | ssh -i ~/.ssh/deploy_key deploy@${{ secrets.DROPLET_IP }} "
+            mkdir -p ${RELEASE_DIR} &&
+            tar -xzf - -C ${RELEASE_DIR} &&
+            ln -sfn ${RELEASE_DIR} /var/www/swforhumans.com/current_new &&
+            mv -Tf /var/www/swforhumans.com/current_new /var/www/swforhumans.com/current &&
+            cd /var/www/swforhumans.com/releases &&
+            ls -dt */ | tail -n +6 | xargs rm -rf 2>/dev/null || true &&
+            echo 'Deployed ${{ github.sha }} successfully'
+          "
+
+      - name: Cleanup SSH key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key
