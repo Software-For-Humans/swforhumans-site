@@ -41,7 +41,7 @@ export const products: Product[] = [
     name: "Pumkin",
     tagline: "AI agents that live on your machine.",
     description:
-      "A local-first agent IDE for developers tired of wiring agents together by hand. No cloud, no API keys, no recurring fees.",
+      "An open-source agent IDE for developers tired of wiring agents together by hand. Local-first, no cloud, no API keys.",
     url: "https://pumkin.app",
     status: "live",
   },
