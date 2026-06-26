@@ -25,17 +25,25 @@ type Project = {
  * preview, "Go to web"). Slots with no product yet read "Coming soon"
  * and are dimmed + non-interactive.
  */
-const PROJECTS: Project[] = [
-  {
-    name: products[0].name,
-    description: products[0].description,
-    url: products[0].url,
-    image: "/shopledger-card.png",
-    imageMobile: "/logo.png",
-  },
-  { name: "Coming soon", comingSoon: true },
-  { name: "Coming soon", comingSoon: true },
-];
+// Map real products from /lib/site.ts; pad up to 3 rows with "Coming soon".
+// Per-product preview images are looked up by name — drop a matching
+// /public/<slug>-card.png to wire one up, otherwise the row renders with
+// the tan placeholder backdrop.
+const PRODUCT_IMAGES: Record<string, { image?: string; imageMobile?: string }> = {
+  Shopledger: { image: "/shopledger-card.png", imageMobile: "/logo.png" },
+};
+
+const PROJECTS: Project[] = products.map((p) => ({
+  name: p.name,
+  description: p.description,
+  url: p.url,
+  image: PRODUCT_IMAGES[p.name]?.image,
+  imageMobile: PRODUCT_IMAGES[p.name]?.imageMobile,
+}));
+
+while (PROJECTS.length < 3) {
+  PROJECTS.push({ name: "Coming soon", comingSoon: true });
+}
 
 /** "+" that rotates 45° into an "×" when its row is open. */
 function PlusToggle({ open }: { open: boolean }) {
