@@ -1,134 +1,93 @@
-# swforhumans.com
+# Software For Humans — Website
 
-Marketing site for **Software For Humans**.
-
-Single-file bilingual (EN/ES) static site. Hosted on the same DigitalOcean
-droplet as `shopledger.app`, using identical nginx + Let's Encrypt + GitHub
-Actions deploy patterns.
-
----
-
-## Stack
-
-- **Static HTML** — one file, `index.html`. No build step.
-- **Nginx** — serves it (same droplet as shopledger.app).
-- **Let's Encrypt** via certbot — TLS certs.
-- **GitHub Actions** — auto-deploy on push to `main`.
-- **Atomic deploys** — releases dir + symlink swap (matches shopledger pattern).
+Marketing site for **Software For Humans, LLC** (Virginia). Built with
+Next.js 16 (App Router) + Tailwind CSS, exported as a fully **static**
+site (no server required) — deployable to Netlify, Vercel, or any static
+host.
 
 ---
 
-## Repo structure
+## Requirements
 
-```
-swforhumans-site/
-├── index.html                          ← the entire site
-├── deploy/
-│   ├── nginx.conf                      ← copy to /etc/nginx/sites-available/
-│   └── setup-droplet.sh                ← one-time droplet setup
-├── .github/
-│   └── workflows/
-│       └── deploy.yml                  ← auto-deploy on push to main
-├── README.md
-└── .gitignore
-```
+- **Node.js 18.18+** (or 20+)
+- npm
 
----
-
-## First-time setup
-
-### 1. Initialize and push the repo
-
-In GitHub Desktop:
-- File → Add Local Repository → select this folder
-- "Create a Repository" → Publish to GitHub (private)
-
-Or in PowerShell / Git Bash:
-```bash
-git init -b main
-git add .
-git commit -m "Initial commit — swforhumans.com bilingual site"
-gh repo create swforhumans-site --private --source=. --remote=origin --push
-```
-
-### 2. Set GitHub Actions secrets
-
-In the repo on GitHub → Settings → Secrets and variables → Actions:
-
-- `DROPLET_IP` — your droplet's IP address (same one shopledger.app uses)
-- `DEPLOY_SSH_KEY` — the private key for the `deploy` user (same one already
-  set up for shopledger.app)
-
-These are the same secrets you already have on the shopledger repo —
-you can copy them across.
-
-### 3. SSH to the droplet — one-time setup
+## Run locally
 
 ```bash
-ssh root@DROPLET_IP 'bash -s' < deploy/setup-droplet.sh
+npm install        # install dependencies (first time only)
+npm run dev        # start the dev server → http://localhost:3000
 ```
 
-This creates `/var/www/swforhumans.com/{releases,current}` with the
-right ownership, drops a temporary HTTP-only nginx config so Let's
-Encrypt can validate the domain, and lists the remaining manual steps.
-
-### 4. Point DNS at the droplet
-
-At your registrar (or Cloudflare):
-
-- `A` record `swforhumans.com` → droplet IP
-- `A` record `www.swforhumans.com` → droplet IP
-
-If using Cloudflare, set both to **DNS only** (grey cloud) for the initial
-cert issuance. You can switch to proxied afterward.
-
-### 5. Get the TLS cert
-
-Once DNS resolves (check with `dig swforhumans.com +short`), SSH to the
-droplet and run:
+## Build for production
 
 ```bash
-certbot --nginx -d swforhumans.com -d www.swforhumans.com
+npm run build      # outputs the static site to the `out/` folder
 ```
 
-Then swap in the full nginx config:
+The `out/` folder is the complete, self-contained website (HTML/CSS/JS).
+Upload it to any static host.
 
-```bash
-# (from your local machine, after pushing this repo to the droplet
-#  via the deploy workflow at least once)
-scp deploy/nginx.conf deploy@DROPLET_IP:/tmp/swforhumans.conf
-ssh deploy@DROPLET_IP "sudo mv /tmp/swforhumans.conf /etc/nginx/sites-available/swforhumans.com && sudo nginx -t && sudo systemctl reload nginx"
-```
+## Deploy
 
-### 6. Push to main → live
-
-After the first push to `main`, the GitHub Action will:
-
-1. Tar the `index.html`
-2. SSH to the droplet, extract to `/var/www/swforhumans.com/releases/<SHA>/`
-3. Atomically swap the `current` symlink to point at the new release
-4. Prune all but the last 5 releases
-
-You'll see "Deployed `<SHA>` successfully" in the Actions log when it's done.
+### Netlify (recommended)
+- **Drag & drop:** run `npm run build`, then drag the `out/` folder onto
+  https://app.netlify.com/drop
+- **Git / CI:** connect the repo in Netlify. The included `netlify.toml`
+  already sets the build command (`npm run build`) and publish dir (`out`).
 
 ---
 
-## Day-to-day editing
+## Contact form
 
-1. Edit `index.html`
-2. Commit + push to `main`
-3. Wait ~30 seconds — site updates automatically
+The "Get in touch" form submits via **Web3Forms** when configured,
+otherwise it falls back to opening the visitor's email client.
+
+To enable real submissions:
+1. Create a free access key at https://web3forms.com
+2. Set the environment variable (e.g. in Netlify → Site config → Env vars):
+   ```
+   NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY=your-key-here
+   ```
+3. Re-deploy. Messages will be delivered to the email tied to that key.
 
 ---
 
-## Notes matching the shopledger pattern
+## Where to edit common content
 
-- **Same droplet, same deploy user, same SSH key.** swforhumans.com lives
-  alongside shopledger.app at `/var/www/swforhumans.com/` with its own
-  releases dir.
-- **Same nginx pattern.** Releases + `current` symlink. SSL configured
-  identically.
-- **Same cache strategy.** Long cache for `/assets/*`, no-cache for HTML,
-  short cache for favicon-style root files.
-- **No build step needed.** Unlike shopledger (Vite), this site is one
-  static file. The workflow just packages and ships.
+| What | File |
+|------|------|
+| Company name, emails, **mailing address**, domains, product list | `src/lib/site.ts` |
+| Hero copy | `src/components/sections/Hero.tsx` |
+| "What we do" / "What we don't" | `src/components/sections/WhatWeDo.tsx`, `WhatWeDont.tsx` |
+| Products (accordion) | `src/components/sections/Products.tsx` |
+| About / Contact | `src/components/sections/About.tsx`, `Contact.tsx` |
+| Footer | `src/components/Footer.tsx` |
+| Legal pages | `src/app/legal/*/page.tsx` |
+| Brand colors / fonts / type scale | `src/app/globals.css` |
+| Open Graph share image | `public/og-image.png` |
+| Favicon / app icons | `src/app/icon.png`, `src/app/apple-icon.png`, `public/favicon.ico` |
+
+---
+
+## Before going live (checklist)
+
+- [ ] Replace the **mailing address** placeholder ("Registered Agent — to
+      be confirmed") in `src/lib/site.ts`.
+- [ ] Set `NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY` for the contact form.
+- [ ] Have the **legal pages** (Terms, Privacy, DMCA, Acceptable Use,
+      Cookies) reviewed by a Virginia attorney and update the dates — they
+      currently carry a "draft" notice.
+
+---
+
+## Project structure
+
+```
+src/
+  app/            routes (App Router) + global styles, SEO (robots, sitemap, manifest)
+  components/     UI components
+    sections/     the homepage sections
+  lib/            site data + small utilities
+public/           static assets (images, favicon)
+```
