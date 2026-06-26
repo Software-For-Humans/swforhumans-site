@@ -37,6 +37,14 @@ export const products: Product[] = [
     url: "https://shopledger.app",
     status: "live",
   },
+  {
+    name: "Pumkin",
+    tagline: "AI agents that live on your machine.",
+    description:
+      "A local-first agent IDE for developers tired of wiring agents together by hand. No cloud, no API keys, no recurring fees.",
+    url: "https://pumkin.app",
+    status: "live",
+  },
 ];
 
 export const navLinks = [
