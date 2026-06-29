@@ -31,6 +31,7 @@ type Project = {
 // the tan placeholder backdrop.
 const PRODUCT_IMAGES: Record<string, { image?: string; imageMobile?: string }> = {
   Shopledger: { image: "/shopledger-card.png", imageMobile: "/logo.png" },
+  Pumkin: { image: "/pumkin-card.png", imageMobile: "/pumkin-icon.png" },
 };
 
 const PROJECTS: Project[] = products.map((p) => ({
